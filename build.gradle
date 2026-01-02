@@ -1,0 +1,45 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'com.moonx'
+version = '1.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+application {
+    mainClass = 'com.moonx.Main'
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'com.moonx.Main',
+                   'Implementation-Title': 'Netherix',
+                   'Implementation-Version': project.version
+    }
+    
+    // Include all compiled classes
+    from sourceSets.main.output
+    
+    // Include all resources
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    
+    // Remove signature files to avoid security exceptions
+    exclude 'META-INF/*.RSA', 'META-INF/*.SF','META-INF/*.DSA'
+    
+    // Handle duplicate files
+    duplicatesStrategy = 'exclude'
+}
