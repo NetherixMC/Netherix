@@ -8,12 +8,13 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
 public class UpdateManager {
+    private static String CURRENT_VERSION;
     private static final String VERSION_URL = "https://raw.githubusercontent.com/username/repository/main/version.txt";
     private static final String DOWNLOAD_BASE_URL = "https://github.com/username/repository/releases/download/v";
-    private String currentVersion;
+    private static final String DOWNLOAD_BASE_SOFTWARE_URL = "https://github.com/NetherixMC/Netherix";
 
     public UpdateManager() {
-        this.currentVersion = getCurrentVersionFromFile();
+        this.CURRENT_VERSION = getCurrentVersionFromFile();
     }
 
     private String getCurrentVersionFromFile() {
@@ -29,11 +30,11 @@ public class UpdateManager {
         }
     }
 
-    public String getCurrentVersion() {
-        return currentVersion;
+    public static String getCurrentVersion() {
+        return CURRENT_VERSION;
     }
 
-    public String getLatestVersion() throws IOException {
+    public static String getLatestVersion() throws IOException {
         URL url = new URL(VERSION_URL);
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()))) {
             return reader.readLine().trim();
@@ -117,7 +118,7 @@ public class UpdateManager {
     }
 
     private String fetchLatestVersion() throws Exception {
-        URL url = new URL(VERSION_CHECK_URL);
+        URL url = new URL(VERSION_URL);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod("GET");
 
@@ -148,4 +149,7 @@ public class UpdateManager {
         }
         return false;
     }
+
+    // UPDATE
+
 }
