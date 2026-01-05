@@ -1,6 +1,7 @@
 package com.moonx.gui;
 
 import com.moonx.update.UpdateManager;
+import com.moonx.bootstrap.RuntimeBootstrap;
 import java.util.Scanner;
 
 public class MainGUI {
@@ -41,10 +42,11 @@ public class MainGUI {
                         showConsole();
                         break;
                     case 5:
-                        System.out.println("\nTerima kasih telah menggunakan Netherix!");
-                        scanner.close();
-                        System.exit(0);
-                        return;
+                        //clearScreen();
+                        System.out.println("DEBUG: Memanggil shutdown...");
+                  		scanner.close();
+                  		RuntimeBootstrap.shutdown();
+                  		return;
                     default:
                         System.out.println("\nPilihan tidak valid!");
                 }
