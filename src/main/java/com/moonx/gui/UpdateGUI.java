@@ -7,6 +7,31 @@ import java.util.Scanner;
 public class UpdateGUI {
     private static final Scanner scanner = new Scanner(System.in);
 
+    /**
+     * Method untuk cek update dan tampilkan hasilnya
+     * Digunakan dari menu utama
+     */
+    public static void checkAndShowUpdates() {
+        System.out.println("\nMengecek update...");
+        UpdateManager updateManager = new UpdateManager();
+        UpdateResult updateResult = updateManager.checkForUpdates();
+
+        switch (updateResult.getResult()) {
+            case UPDATE_AVAILABLE:
+                showUpdateAvailable(updateResult);
+                break;
+            case UPDATE_NOT_AVAILABLE:
+                noUpdatesAvailable();
+                break;
+            case UPDATE_ERROR:
+                showUpdateError(updateResult);
+                break;
+        }
+    }
+
+    /**
+     * Tampilkan dialog update tersedia
+     */
     public static void showUpdateAvailable(UpdateResult updateResult) {
         System.out.println("\n=== PEMBARUAN TERSEDIA ===");
         System.out.println("Versi baru tersedia: " + updateResult.getVersion());
@@ -36,8 +61,19 @@ public class UpdateGUI {
         }
     }
 
+    /**
+     * Tampilkan pesan tidak ada update
+     */
     public static void noUpdatesAvailable() {
         System.out.println("\n=== PEMERIKSAAN PEMBARUAN ===");
         System.out.println("Aplikasi Anda sudah menggunakan versi terbaru!");
+    }
+
+    /**
+     * Tampilkan error saat cek update
+     */
+    public static void showUpdateError(UpdateResult updateResult) {
+        System.out.println("\n=== ERROR PEMERIKSAAN PEMBARUAN ===");
+        System.out.println("Terjadi kesalahan: " + updateResult.getMessage());
     }
 }

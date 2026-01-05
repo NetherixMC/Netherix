@@ -7,12 +7,16 @@ import com.moonx.update.UpdateResult;
 
 public class RuntimeBootstrap {
     public static void start() {
-        // Check for updates in UpdateManager
+        // Check for updates saat startup
         UpdateManager updateManager = new UpdateManager();
         UpdateResult updateResult = updateManager.checkForUpdates();
-
-        // Show main menu
+        
+        // Tampilkan hasil pengecekan update
+        if (updateResult.getResult() == UpdateResult.Result.UPDATE_AVAILABLE) {
+            UpdateGUI.showUpdateAvailable(updateResult);
+        }
+        
+        // Lanjut ke main menu
         MainGUI.show();
     }
-
 }

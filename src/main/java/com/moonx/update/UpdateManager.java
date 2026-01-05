@@ -3,30 +3,28 @@ package com.moonx.update;
 import java.io.*;
 import java.net.URL;
 import java.net.HttpURLConnection;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 
 public class UpdateManager {
     private static String CURRENT_VERSION;
     private static final String VERSION_URL = "https://raw.githubusercontent.com/username/repository/main/version.txt";
     private static final String DOWNLOAD_BASE_URL = "https://github.com/username/repository/releases/download/v";
-    private static final String DOWNLOAD_BASE_SOFTWARE_URL = "https://github.com/NetherixMC/Netherix";
 
     public UpdateManager() {
-        this.CURRENT_VERSION = getCurrentVersionFromFile();
+        if (CURRENT_VERSION == null) {
+            CURRENT_VERSION = getCurrentVersionFromFile();
+        }
     }
 
+    /**
+     * Baca versi dari file version.txt di dalam JAR
+     */
     private String getCurrentVersionFromFile() {
-        try {
-            // Coba baca versi dari file version.txt di JAR
-            try (InputStream is = getClass().getResourceAsStream("/version.txt");
-                 BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
-                return reader.readLine().trim();
-            }
+        try (InputStream is = getClass().getResourceAsStream("/version.txt");
+             BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
+            return reader.readLine().trim();
         } catch (Exception e) {
             // Jika gagal, gunakan versi default
-            return "1.0";
+            return "1.0.0";
         }
     }
 
@@ -34,54 +32,29 @@ public class UpdateManager {
         return CURRENT_VERSION;
     }
 
-    public static String getLatestVersion() throws IOException {
+    /**
+     * Ambil versi terbaru dari server
+     */
+    private String fetchLatestVersion() throws Exception {
         URL url = new URL(VERSION_URL);
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(url.openStream()))) {
-            return reader.readLine().trim();
-        }
-    }
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod("GET");
+        connection.setConnectTimeout(5000);
+        connection.setReadTimeout(5000);
 
-    public static String getDownloadUrl(String version) {
-        return DOWNLOAD_BASE_URL + version + "/Netherix-" + version + ".jar";
-    }
-
-    public static boolean downloadUpdate(String version) {
-        try {
-            String downloadUrl = getDownloadUrl(version);
-            URL url = new URL(downloadUrl);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
-            connection.setConnectTimeout(5000);
-            connection.setReadTimeout(30000); // 30 seconds for download
-
-            int responseCode = connection.getResponseCode();
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                // Create downloads directory if it doesn't exist
-                File downloadsDir = new File("downloads");
-                if (!downloadsDir.exists()) {
-                    downloadsDir.mkdir();
-                }
-
-                // Save the file
-                String fileName = "Netherix-" + version + ".jar";
-                File outputFile = new File(downloadsDir, fileName);
-
-                try (InputStream in = connection.getInputStream();
-                     FileOutputStream out = new FileOutputStream(outputFile)) {
-                    byte[] buffer = new byte[4096];
-                    int bytesRead;
-                    while ((bytesRead = in.read(buffer)) != -1) {
-                        out.write(buffer, 0, bytesRead);
-                    }
-                }
-                return true;
+        int responseCode = connection.getResponseCode();
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            try (BufferedReader in = new BufferedReader(
+                    new InputStreamReader(connection.getInputStream()))) {
+                return in.readLine().trim();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
-        return false;
+        return null;
     }
 
+    /**
+     * Cek apakah ada update tersedia
+     */
     public UpdateResult checkForUpdates() {
         try {
             String latestVersion = fetchLatestVersion();
@@ -94,7 +67,6 @@ public class UpdateManager {
                 );
             }
 
-            // Place the code here
             if (isNewerVersion(latestVersion, CURRENT_VERSION)) {
                 return new UpdateResult(
                         UpdateResult.Result.UPDATE_AVAILABLE,
@@ -117,21 +89,9 @@ public class UpdateManager {
         }
     }
 
-    private String fetchLatestVersion() throws Exception {
-        URL url = new URL(VERSION_URL);
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        connection.setRequestMethod("GET");
-
-        int responseCode = connection.getResponseCode();
-        if (responseCode == HttpURLConnection.HTTP_OK) {
-            try (BufferedReader in = new BufferedReader(
-                    new InputStreamReader(connection.getInputStream()))) {
-                return in.readLine().trim();
-            }
-        }
-        return null;
-    }
-
+    /**
+     * Bandingkan versi: apakah latestVersion lebih baru dari currentVersion
+     */
     private boolean isNewerVersion(String latestVersion, String currentVersion) {
         String[] latest = latestVersion.split("\\.");
         String[] current = currentVersion.split("\\.");
@@ -150,6 +110,50 @@ public class UpdateManager {
         return false;
     }
 
-    // UPDATE
+    /**
+     * Generate URL download untuk versi tertentu
+     */
+    public static String getDownloadUrl(String version) {
+        return DOWNLOAD_BASE_URL + version + "/Netherix-" + version + ".jar";
+    }
 
+    /**
+     * Download update versi baru
+     */
+    public static boolean downloadUpdate(String version) {
+        try {
+            String downloadUrl = getDownloadUrl(version);
+            URL url = new URL(downloadUrl);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            connection.setConnectTimeout(5000);
+            connection.setReadTimeout(30000); // 30 detik untuk download
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                // Buat folder downloads jika belum ada
+                File downloadsDir = new File("downloads");
+                if (!downloadsDir.exists()) {
+                    downloadsDir.mkdir();
+                }
+
+                // Simpan file
+                String fileName = "Netherix-" + version + ".jar";
+                File outputFile = new File(downloadsDir, fileName);
+
+                try (InputStream in = connection.getInputStream();
+                     FileOutputStream out = new FileOutputStream(outputFile)) {
+                    byte[] buffer = new byte[4096];
+                    int bytesRead;
+                    while ((bytesRead = in.read(buffer)) != -1) {
+                        out.write(buffer, 0, bytesRead);
+                    }
+                }
+                return true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
 }
