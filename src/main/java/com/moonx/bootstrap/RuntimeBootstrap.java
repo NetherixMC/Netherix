@@ -12,7 +12,7 @@ public class RuntimeBootstrap {
 
     public static void start() {
         UpdateGUI.checkAndShowUpdates();
-
+        
         MainGUI.show();
         
     }
