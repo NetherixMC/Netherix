@@ -11,14 +11,10 @@ public class RuntimeBootstrap {
     private static volatile boolean shuttingDown = false;
 
     public static void start() {
-        UpdateManager updateManager = new UpdateManager();
-        UpdateResult result = updateManager.checkForUpdates();
-
-        if (result.getResult() == UpdateResult.Result.UPDATE_AVAILABLE) {
-            UpdateGUI.showUpdateAvailable(result);
-        }
+        UpdateGUI.checkAndShowUpdates();
 
         MainGUI.show();
+        
     }
 
     public static void shutdown() {

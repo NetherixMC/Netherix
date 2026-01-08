@@ -2,10 +2,12 @@ package com.moonx.gui;
 
 import com.moonx.update.UpdateManager;
 import com.moonx.bootstrap.RuntimeBootstrap;
+
 import java.util.Scanner;
 import java.util.NoSuchElementException;
 
 public class MainGUI {
+
     private static final Scanner scanner = new Scanner(System.in);
     public static volatile boolean running = true;
     private static volatile boolean inMenu = false;
@@ -19,7 +21,8 @@ public class MainGUI {
 
                 inMenu = true;
                 inputCancelled = false;
-                String input = scanner.nextLine().trim();
+
+                String input = scanner.nextLine().trim(); // ⬅️ baca input
                 inMenu = false;
 
                 if (inputCancelled) {
@@ -31,19 +34,25 @@ public class MainGUI {
                 if (input.isEmpty()) continue;
 
                 prosesMenu(Integer.parseInt(input));
-            } catch (NoSuchElementException e) {
-                if (!running) break;
+
+            }
+            // ================= EOF (FINAL STATE) =================
+            catch (NoSuchElementException e) {
                 inMenu = false;
-                if (!inputCancelled) {
-                    System.out.println("\n\nInput error. Silakan coba lagi.");
-                }
-                inputCancelled = false;
-                tekanEnter();
-            } catch (NumberFormatException e) {
+
+                // NoSuchElementException = EOF (PASTI)
+                System.err.println("\n[EOF] Input stream ditutup. Runtime dihentikan.");
+                RuntimeBootstrap.shutdown();
+                System.exit(1);
+            }
+            // ================= INPUT USER SALAH =================
+            catch (NumberFormatException e) {
                 inMenu = false;
                 System.out.println("\nMasukan tidak valid. Harap masukkan angka 1-5!");
                 tekanEnter();
-            } catch (Exception e) {
+            }
+            // ================= ERROR LAIN =================
+            catch (Exception e) {
                 inMenu = false;
                 if (!running) break;
                 System.err.println("\nTerjadi kesalahan: " + e.getMessage());
@@ -53,6 +62,8 @@ public class MainGUI {
         scanner.close();
     }
 
+    /* ===================== STATE ===================== */
+
     public static boolean isInMenu() {
         return inMenu;
     }
@@ -61,6 +72,8 @@ public class MainGUI {
         inputCancelled = true;
         inMenu = false;
     }
+
+    /* ===================== UI ===================== */
 
     private static void tampilkanMenu() {
         System.out.println("\n=== Aplikasi Netherix ===");
@@ -108,18 +121,23 @@ public class MainGUI {
         System.out.println("© 2025 Netherix Team");
     }
 
+    /* ===================== INPUT ===================== */
+
     private static void tekanEnter() {
         System.out.print("\nTekan Enter untuk melanjutkan...");
         try {
             System.in.read();
             while (System.in.available() > 0) System.in.read();
-        } catch (Exception e) {}
+        } catch (Exception ignored) {}
     }
+
+    /* ===================== SCREEN ===================== */
 
     private static void clearScreen() {
         try {
             if (System.getProperty("os.name").contains("Windows")) {
-                new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+                new ProcessBuilder("cmd", "/c", "cls")
+                        .inheritIO().start().waitFor();
             } else {
                 System.out.print("\033[H\033[2J");
                 System.out.flush();
