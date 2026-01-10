@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^bash -lc 'git status --porcelain > /tmp/git_status; if \\[ -s /tmp/git_status \\]; then git add -A && git commit -m \"Update\"; fi; git push origin \"\\$\\(git branch --show-current\\)\"'$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

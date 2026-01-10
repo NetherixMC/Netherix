@@ -12,9 +12,8 @@ public class RuntimeBootstrap {
 
     public static void start() {
         UpdateGUI.checkAndShowUpdates();
-        
-        MainGUI.show();
-        
+
+        CoreRuntime.startCore();
     }
 
     public static void shutdown() {
