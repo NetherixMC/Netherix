@@ -1,6 +1,17 @@
 package com.moonx.update;
 
 public class UpdateResult {
+
+    /* ========= KONSTANTA ========= */
+
+    public static final String CORE_NAME = "Netherix-Core";
+    public static final String VERSION_URL =
+            "https://raw.githubusercontent.com/NetherixMC/Netherix-Core/main/version.txt";
+    public static final String DOWNLOAD_BASE_URL =
+            "https://github.com/NetherixMC/Netherix-Core/releases/download/v";
+
+    /* ========= STATUS ========= */
+
     public enum Result {
         UPDATE_AVAILABLE,
         UPDATE_NOT_AVAILABLE,
@@ -8,8 +19,8 @@ public class UpdateResult {
     }
 
     private final Result result;
-    private final String version;
     private final String message;
+    private final String version;
 
     public UpdateResult(Result result, String message) {
         this(result, message, null);
@@ -33,10 +44,14 @@ public class UpdateResult {
         return version;
     }
 
+    /* ========= HELPER ========= */
+
+    public boolean hasUpdate() {
+        return result == Result.UPDATE_AVAILABLE && version != null;
+    }
+
     public String getDownloadUrl() {
-        if (version != null && result == Result.UPDATE_AVAILABLE) {
-            return UpdateManager.getDownloadUrl(version);
-        }
-        return null;
+        if (!hasUpdate()) return null;
+        return DOWNLOAD_BASE_URL + version + "/" + CORE_NAME + version + ".jar";
     }
 }

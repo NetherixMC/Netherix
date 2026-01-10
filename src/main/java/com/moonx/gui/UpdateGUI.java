@@ -1,18 +1,22 @@
 package com.moonx.gui;
 
+import com.moonx.update.UpdateDownloader;
 import com.moonx.update.UpdateManager;
 import com.moonx.update.UpdateResult;
+
 import java.util.Scanner;
 
 public class UpdateGUI {
+
     private static final Scanner scanner = new Scanner(System.in);
 
     /**
      * Method untuk cek update dan tampilkan hasilnya
-     * Digunakan dari menu utama
+     * Dipanggil dari menu utama
      */
     public static void checkAndShowUpdates() {
         System.out.println("\nMengecek update...");
+
         UpdateManager updateManager = new UpdateManager();
         UpdateResult updateResult = updateManager.checkForUpdates();
 
@@ -20,9 +24,11 @@ public class UpdateGUI {
             case UPDATE_AVAILABLE:
                 showUpdateAvailable(updateResult);
                 break;
+
             case UPDATE_NOT_AVAILABLE:
-                noUpdatesAvailable();
+                noUpdatesAvailable(updateResult);
                 break;
+
             case UPDATE_ERROR:
                 showUpdateError(updateResult);
                 break;
@@ -30,50 +36,63 @@ public class UpdateGUI {
     }
 
     /**
-     * Tampilkan dialog update tersedia
+     * Dialog saat update tersedia
      */
-    public static void showUpdateAvailable(UpdateResult updateResult) {
+    private static void showUpdateAvailable(UpdateResult updateResult) {
         System.out.println("\n=== PEMBARUAN TERSEDIA ===");
-        System.out.println("Versi baru tersedia: " + updateResult.getVersion());
-        System.out.println("Pesan: " + updateResult.getMessage());
+        System.out.println("Versi terbaru : " + updateResult.getVersion());
+        System.out.println("Info          : " + updateResult.getMessage());
 
         while (true) {
-            System.out.print("\nApakah Anda ingin memperbarui sekarang? (y/n): ");
-            String jawaban = scanner.nextLine().trim().toLowerCase();
+            System.out.print("\nPerbarui sekarang? (y/n): ");
+            String input = scanner.nextLine().trim().toLowerCase();
 
-            if (jawaban.equals("y") || jawaban.equals("ya")) {
-                System.out.println("\nMengunduh pembaruan...");
-                boolean success = UpdateManager.downloadUpdate(updateResult.getVersion());
-
-                if (success) {
-                    System.out.println("Pembaruan berhasil diunduh ke folder 'downloads'");
-                    System.out.println("Silakan tutup aplikasi dan jalankan versi terbaru.");
-                } else {
-                    System.out.println("Gagal mengunduh pembaruan. Silakan coba lagi nanti.");
-                }
+            if (input.equals("y") || input.equals("ya")) {
+                startDownload(updateResult);
                 break;
-            } else if (jawaban.equals("n") || jawaban.equals("tidak")) {
-                System.out.println("\nPembaruan akan ditunda.");
-                break;
-            } else {
-                System.out.println("Pilihan tidak valid. Silakan jawab 'y' untuk Ya atau 'n' untuk Tidak.");
             }
+
+            if (input.equals("n") || input.equals("tidak")) {
+                System.out.println("\nPembaruan ditunda.");
+                break;
+            }
+
+            System.out.println("Input tidak valid.");
         }
     }
 
     /**
-     * Tampilkan pesan tidak ada update
+     * Proses download update
      */
-    public static void noUpdatesAvailable() {
-        System.out.println("\n=== PEMERIKSAAN PEMBARUAN ===");
-        System.out.println("Aplikasi Anda sudah menggunakan versi terbaru!");
+    private static void startDownload(UpdateResult updateResult) {
+        System.out.println("\nMengunduh pembaruan...");
+        System.out.println("URL: " + updateResult.getDownloadUrl());
+
+        boolean success = UpdateDownloader.download(updateResult);
+
+        if (success) {
+            System.out.println("\n✔ Pembaruan berhasil diunduh");
+            System.out.println("📁 Lokasi: folder 'downloads'");
+            System.out.println("Silakan tutup aplikasi dan jalankan versi terbaru.");
+        } else {
+            System.out.println("\n✖ Gagal mengunduh pembaruan.");
+            System.out.println("Silakan coba lagi nanti.");
+        }
     }
 
     /**
-     * Tampilkan error saat cek update
+     * Tidak ada update
      */
-    public static void showUpdateError(UpdateResult updateResult) {
-        System.out.println("\n=== ERROR PEMERIKSAAN PEMBARUAN ===");
-        System.out.println("Terjadi kesalahan: " + updateResult.getMessage());
+    private static void noUpdatesAvailable(UpdateResult updateResult) {
+        System.out.println("\n=== PEMERIKSAAN PEMBARUAN ===");
+        System.out.println(updateResult.getMessage());
+    }
+
+    /**
+     * Error saat cek update
+     */
+    private static void showUpdateError(UpdateResult updateResult) {
+        System.out.println("\n=== ERROR PEMBARUAN ===");
+        System.out.println("Pesan: " + updateResult.getMessage());
     }
 }

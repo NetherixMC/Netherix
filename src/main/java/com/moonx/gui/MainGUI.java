@@ -22,7 +22,7 @@ public class MainGUI {
                 inMenu = true;
                 inputCancelled = false;
 
-                String input = scanner.nextLine().trim();
+                String input = scanner.nextLine().trim(); // ⬅️ baca input
                 inMenu = false;
 
                 if (inputCancelled) {
@@ -35,42 +35,32 @@ public class MainGUI {
 
                 prosesMenu(Integer.parseInt(input));
 
-            } catch (NoSuchElementException e) {
-                handleEOF(e);                     // ← handler khusus EOF
-            } catch (NumberFormatException e) {
-                handleUserInputError(e);          // ← handler input salah
-            } catch (Exception e) {
-                handleOtherError(e);              // ← handler error lain
+            }
+            // ================= EOF (FINAL STATE) =================
+            catch (NoSuchElementException e) {
+                inMenu = false;
+
+                // NoSuchElementException = EOF (PASTI)
+                System.err.println("\n[EOF] Input stream ditutup. Runtime dihentikan.");
+                RuntimeBootstrap.shutdown();
+                System.exit(1);
+            }
+            // ================= INPUT USER SALAH =================
+            catch (NumberFormatException e) {
+                inMenu = false;
+                System.out.println("\nMasukan tidak valid. Harap masukkan angka 1-5!");
+                tekanEnter();
+            }
+            // ================= ERROR LAIN =================
+            catch (Exception e) {
+                inMenu = false;
+                if (!running) break;
+                System.err.println("\nTerjadi kesalahan: " + e.getMessage());
+                tekanEnter();
             }
         }
-    scanner.close();
+        scanner.close();
     }
-
-    /* ===================== EOF ERROR HANDLERS ===================== */
-    private static void handleEOF(NoSuchElementException e) {
-        inMenu = false;
-        System.err.println("\n[EOF] Input stream ditutup. Runtime dihentikan.");
-        RuntimeBootstrap.shutdown();
-        System.exit(1);
-    }
-
-    /* ===================== INPUT ERROR HANDLER ===================== */
-
-    private static void handleUserInputError(NumberFormatException e) {
-        inMenu = false;
-        System.out.println("\nMasukan tidak valid. Harap masukkan angka 1-5!");
-        tekanEnter();
-    }
-
-    /* ===================== OTHER ERROR HANDLER ===================== */
-
-    private static void handleOtherError(Exception e) {
-        inMenu = false;
-        if (!running) return;
-        System.err.println("\nTerjadi kesalahan: " + e.getMessage());
-        tekanEnter();
-    }
-
 
     /* ===================== STATE ===================== */
 
@@ -80,7 +70,7 @@ public class MainGUI {
 
     public static void cancelInput() {
         inputCancelled = true;
-        inMenu = false;
+        inMenu = true;
     }
 
     /* ===================== UI ===================== */
@@ -107,7 +97,8 @@ public class MainGUI {
                 tekanEnter();
                 break;
             case 3:
-                SoftwareGUI.show();
+                System.out.println("\n=== Software ===");
+                System.out.println("Fitur ini akan segera hadir...");
                 tekanEnter();
                 break;
             case 4:
@@ -142,7 +133,7 @@ public class MainGUI {
 
     /* ===================== SCREEN ===================== */
 
-    public static void clearScreen() {
+    private static void clearScreen() {
         try {
             if (System.getProperty("os.name").contains("Windows")) {
                 new ProcessBuilder("cmd", "/c", "cls")
