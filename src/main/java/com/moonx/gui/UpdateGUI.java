@@ -1,5 +1,7 @@
 package com.moonx.gui;
 
+import com.moonx.bootstrap.CoreRuntime;
+import com.moonx.progressbar.ProgressBar;
 import com.moonx.update.UpdateDownloader;
 import com.moonx.update.UpdateManager;
 import com.moonx.update.UpdateResult;
@@ -15,10 +17,28 @@ public class UpdateGUI {
      * Dipanggil dari menu utama
      */
     public static void checkAndShowUpdates() {
-        System.out.println("\nMengecek update...");
+        ProgressBar spin = ProgressBar.spinner("\nMengecek update");
 
-        UpdateManager updateManager = new UpdateManager();
-        UpdateResult updateResult = updateManager.checkForUpdates();
+        UpdateResult updateResult;
+
+        try {
+            // Jalankan spinner sebentar
+            for (int i = 0; i < 10; i++) {
+                spin.update(0, 0);
+                Thread.sleep(100);
+            }
+
+            UpdateManager updateManager = new UpdateManager();
+            updateResult = updateManager.checkForUpdates();
+
+        } catch (InterruptedException e) {
+            spin.finish();
+            Thread.currentThread().interrupt();
+            System.out.println("\nPemeriksaan update dibatalkan.");
+            return;
+        }
+
+        spin.finish();
 
         switch (updateResult.getResult()) {
             case UPDATE_AVAILABLE:
@@ -66,17 +86,22 @@ public class UpdateGUI {
      */
     private static void startDownload(UpdateResult updateResult) {
         System.out.println("\nMengunduh pembaruan...");
-        System.out.println("URL: " + updateResult.getDownloadUrl());
 
-        boolean success = UpdateDownloader.download(updateResult);
+        ProgressBar bar = ProgressBar.console()
+                .message("Download Netherix Core");
+
+        boolean success = UpdateDownloader.download(updateResult, (downloaded, total) -> {
+            bar.update(downloaded, total);
+        });
+
+        bar.finish();
 
         if (success) {
             System.out.println("\n✔ Pembaruan berhasil diunduh");
-            System.out.println("📁 Lokasi: folder 'downloads'");
-            System.out.println("Silakan tutup aplikasi dan jalankan versi terbaru.");
+            CoreRuntime.startCore();
         } else {
             System.out.println("\n✖ Gagal mengunduh pembaruan.");
-            System.out.println("Silakan coba lagi nanti.");
+            System.out.println("Silakan coba lagi.");
         }
     }
 

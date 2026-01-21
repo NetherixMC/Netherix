@@ -2,18 +2,22 @@ package com.moonx.bootstrap;
 
 import com.moonx.gui.MainGUI;
 import com.moonx.gui.UpdateGUI;
+import com.moonx.progressbar.ProgressBar;
 import com.moonx.update.UpdateManager;
 import com.moonx.update.UpdateResult;
 import sun.misc.Signal;
 import sun.misc.SignalHandler;
 
+import java.io.File;
+
 public class RuntimeBootstrap {
     private static volatile boolean shuttingDown = false;
 
     public static void start() {
-        UpdateGUI.checkAndShowUpdates();
 
         CoreRuntime.startCore();
+
+        MainGUI.show();
     }
 
     public static void shutdown() {
@@ -52,5 +56,9 @@ public class RuntimeBootstrap {
                 }
             }));
         }
+    }
+
+    public static void setupShutdownHook(Thread thread) {
+        Runtime.getRuntime().addShutdownHook(thread);
     }
 }
