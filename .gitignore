@@ -1,0 +1,17 @@
+# Gradle build artifacts
+/.gradle/
+/build/
+
+# Java compiled classes
+**/*.class
+**/*.jar
+
+# IDE files
+/.idea/
+/.vscode/
+
+# logs
+*.log
+
+# temporary files
+*.tmp
