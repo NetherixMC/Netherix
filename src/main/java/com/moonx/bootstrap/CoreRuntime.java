@@ -1,57 +1,108 @@
 package com.moonx.bootstrap;
 
-import com.moonx.bootstrap.RuntimeBootstrap;
+import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 
 public class CoreRuntime {
 
-    public static final String CORE_FILE = "netherix-core.jar";
     private static Process coreProcess;
 
-    public static void startCore() throws IOException {
+    public static void startCore() {
 
-        // ✅ CEK CORE ADA ATAU TIDAK
-        File coreJar = new File(CORE_FILE);
-        if (!coreJar.exists() || !coreJar.isFile()) {
-            System.err.println("[Runtime] ERROR: netherix-core.jar tidak ditemukan!");
-            System.err.println("[Runtime] Runtime dihentikan untuk mencegah sistem tidak konsisten.");
-            System.exit(1); // ❌ HARD EXIT
+        // 📁 Folder khusus core
+        File coreDir = new File(".");
+
+        File coreJar = findCoreJar(coreDir);
+        if (coreJar == null) {
+            System.err.println("Warning: Netherix Core not found.");
+            System.exit(1);
         }
-
-        long runtimePid = ProcessHandle.current().pid();
 
         List<String> command = new ArrayList<>();
         command.add("java");
+
         command.add("-jar");
-        command.add("netherix-core.jar");
-        command.add("--parent-pid=" + runtimePid);
+
+        // 🔑 KUNCI AKSES
+        command.add("-Dlauncher=netherix");
+
+        command.add(coreJar.getAbsolutePath());
 
         ProcessBuilder pb = new ProcessBuilder(command);
-
-        // ❗ PENTING: jangan detach
         pb.redirectErrorStream(true);
+        pb.inheritIO(); // ✅ Penting: inherit IO agar GUI bisa muncul
 
-        coreProcess = pb.start();
-
-        System.out.println("[Runtime] Core started (PID: " + coreProcess.pid() + ")");
-
-        // Shutdown hook → pastikan Core mati
-        RuntimeBootstrap.setupShutdownHook(new Thread(() -> {
-            stopCore();
-        }));
+        try {
+            coreProcess = pb.start();
+            System.out.println("Core started: " + coreJar.getName());
+            
+            // ✅ Setup shutdown hook untuk stop core saat JVM mati
+            Runtime.getRuntime().addShutdownHook(new Thread(CoreRuntime::stopCore));
+            
+            // ✅ Monitor output core (opsional, untuk debug)
+            new Thread(() -> {
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(coreProcess.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        System.out.println("[CORE] " + line);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }).start();
+            
+            // ✅ Tunggu core process selesai (blocking)
+            int exitCode = coreProcess.waitFor();
+            System.out.println("Core exited with code: " + exitCode);
+            
+        } catch (IOException | InterruptedException e) {
+            System.err.println("Warning: Cannot start core.");
+            e.printStackTrace();
+            System.exit(1);
+        }
     }
 
-    public static void stopCore() {
+    private static void stopCore() {
         if (coreProcess != null && coreProcess.isAlive()) {
-            System.out.println("[Runtime] Stopping Core...");
+            System.out.println("Stopping Netherix Core...");
             coreProcess.destroy();
-
             try {
-                coreProcess.waitFor();
-            } catch (InterruptedException ignored) {
+                coreProcess.waitFor(); // Tunggu sampai benar-benar mati
+            } catch (InterruptedException e) {
+                coreProcess.destroyForcibly(); // Paksa kill jika tidak mau mati
             }
         }
+    }
+
+    // 🔍 SCAN CORE VIA MANIFEST
+    private static File findCoreJar(File dir) {
+        if (!dir.exists() || !dir.isDirectory()) return null;
+
+        File[] files = dir.listFiles();
+        if (files == null) return null;
+
+        for (File file : files) {
+            if (!file.getName().endsWith(".jar")) continue;
+
+            try (JarFile jar = new JarFile(file)) {
+                Manifest mf = jar.getManifest();
+                if (mf == null) continue;
+
+                String type = mf.getMainAttributes()
+                        .getValue("Netherix-Type");
+
+                if ("Core".equals(type)) {
+                    return file; // ✅ CORE VALID
+                }
+            } catch (Exception ignored) {}
+        }
+        return null;
     }
 }

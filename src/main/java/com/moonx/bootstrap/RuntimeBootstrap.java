@@ -1,7 +1,7 @@
 package com.moonx.bootstrap;
 
-import com.moonx.gui.MainGUI;
-import com.moonx.gui.UpdateGUI;
+import com.moonx.cli.gui.recovery.RecoveryUI;
+import com.moonx.cli.gui.UpdateUI;
 import com.moonx.update.UpdateManager;
 import com.moonx.update.UpdateResult;
 import sun.misc.Signal;
@@ -11,20 +11,28 @@ public class RuntimeBootstrap {
     private static volatile boolean shuttingDown = false;
 
     public static void start() {
-        UpdateGUI.checkAndShowUpdates();
+        //UpdateUI.checkAndShowUpdates();
 
         CoreRuntime.startCore();
+        //RecoveryUI.startRecovery();
+        //MainGUI.show();
     }
 
     public static void shutdown() {
         if (shuttingDown) return;
 
         shuttingDown = true;
-        MainGUI.running = false;
+        //MainGUI.running = false;
 
         System.out.println("\n\nMenghentikan aplikasi...");
         System.out.println("Terima Kasih telah menggunakan Netherix");
         System.exit(0);
+    }
+
+    public static void restart() {
+        System.out.println("Merestart launcher...");
+        shutdown();
+        start();
     }
 
     public static void setupShutdownHook() {
@@ -32,10 +40,11 @@ public class RuntimeBootstrap {
             // Handle Ctrl+C dengan Signal handler
             Signal.handle(new Signal("INT"), new SignalHandler() {
                 public void handle(Signal sig) {
-                    if (MainGUI.isInMenu()) {
+                    if (RecoveryUI.inRecoveryMenu) {
                         // Jangan shutdown jika di menu
                         System.out.println("\n\nCtrl+C terdeteksi! Gunakan menu 5 untuk keluar dengan aman.");
-                        MainGUI.cancelInput();
+                        //MainGUI.cancelInput();
+                        //MainGUI.prosesMenuEnter();
                     } else {
                         // Shutdown jika tidak di menu
                         System.out.println("\n\nMenerima sinyal shutdown (Ctrl+C)...");
